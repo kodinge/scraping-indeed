@@ -1,2 +1,2 @@
 # scraping-indeed
-data scraping from indeed.com
+Data scraping from website indeed.com
