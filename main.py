@@ -41,8 +41,10 @@ def get_all_items():
 
     for item in contents:
         title = item.find('h2', 'jobTitle').text
+        company = item.find('span', 'companyName').text
         location = item.find('div', 'companyLocation').text
         print(title)
+        print(company)
         print(location)
 
 
