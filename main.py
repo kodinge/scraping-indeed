@@ -43,9 +43,15 @@ def get_all_items():
         title = item.find('h2', 'jobTitle').text
         company = item.find('span', 'companyName').text
         location = item.find('div', 'companyLocation').text
+        if item.find('div', 'salary-snippet') is not None:
+            salary = item.find('div', 'salary-snippet').text
+        else:
+            salary = 'Salary not defined'
         print(title)
         print(company)
         print(location)
+        print(salary)
+        print(' ')
 
 
 if __name__ == '__main__':
