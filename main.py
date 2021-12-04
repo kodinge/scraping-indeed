@@ -1,6 +1,8 @@
 import requests
+import json
 from bs4 import BeautifulSoup
 import os
+import pandas as pd
 
 url = 'https://id.indeed.com/jobs?'
 params = {
@@ -12,6 +14,7 @@ headers = {
                   'Chrome/96.0.4664.45 Safari/537.36'
 }
 res = requests.get(url, params=params, headers=headers)
+indeeds = None
 
 
 def get_total_pages():
@@ -39,20 +42,45 @@ def get_all_items():
     soup = BeautifulSoup(res.text, 'html.parser')
     contents = soup.find_all('div', 'job_seen_beacon')
 
+    jobs = []
     for item in contents:
         title = item.find('h2', 'jobTitle').text
         company = item.find('span', 'companyName').text
         location = item.find('div', 'companyLocation').text
-        if item.find('div', 'salary-snippet') is not None:
+
+        try:
             salary = item.find('div', 'salary-snippet').text
-        else:
+            link = 'https://id.indeed.com' + item.find('a')['href']
+        except:
             salary = 'Salary not defined'
-        print(title)
-        print(company)
-        print(location)
-        print(salary)
-        print(' ')
+            link = 'Link not available'
+
+        data = {
+            'title': title,
+            'company': company,
+            'location': location,
+            'salary': salary,
+            'link': link
+        }
+        jobs.append(data)
+
+    try:
+        os.mkdir('json')
+    except FileExistsError:
+        pass
+
+    with open('json/jobs.json', 'w+') as jsondata:
+        json.dump(jobs, jsondata)
+
+    print('json created')
+
+    df = pd.DataFrame(jobs)
+    df.to_csv('indeed_data.csv', index=False)
+    df.to_excel('indeed_data.xlsx', index=False)
+
+    print('csv and excel created')
 
 
 if __name__ == '__main__':
     get_all_items()
+    # get_total_pages()
