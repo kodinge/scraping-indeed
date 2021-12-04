@@ -5,19 +5,31 @@ import os
 import pandas as pd
 
 url = 'https://id.indeed.com/jobs?'
-params = {
-    'q': 'python developer',
-    'l': 'Jakarta'
-}
-headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/96.0.4664.45 Safari/537.36'
-}
-res = requests.get(url, params=params, headers=headers)
+# params = {
+#     'q': 'Python Development',
+#     'l': 'Jakarta'
+# }
+# headers = {
+#     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+#                   'Chrome/96.0.4664.45 Safari/537.36'
+# }
+# res = requests.get(url, params=params, headers=headers)
 indeeds = None
 
 
-def get_total_pages():
+def get_total_pages(query, location):
+    params = {
+        'q': query,
+        'l': location
+    }
+
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/96.0.4664.45 Safari/537.36'
+    }
+
+    res = requests.get(url, params=params, headers=headers)
+
     try:
         os.mkdir('temp')
     except FileExistsError:
@@ -38,7 +50,20 @@ def get_total_pages():
     return total_pages
 
 
-def get_all_items():
+def get_all_items(query, location, start, page):
+    params = {
+        'q': query,
+        'l': location,
+        'start': start
+    }
+
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/96.0.4664.45 Safari/537.36'
+    }
+
+    res = requests.get(url, params=params, headers=headers)
+
     soup = BeautifulSoup(res.text, 'html.parser')
     contents = soup.find_all('div', 'job_seen_beacon')
 
@@ -69,18 +94,50 @@ def get_all_items():
     except FileExistsError:
         pass
 
-    with open('json/jobs.json', 'w+') as jsondata:
+    with open(f'json/{query}_in_{location}_page_{page}.json', 'w+') as jsondata:
         json.dump(jobs, jsondata)
 
     print('json created')
+    return jobs
 
-    df = pd.DataFrame(jobs)
-    df.to_csv('indeed_data.csv', index=False)
-    df.to_excel('indeed_data.xlsx', index=False)
 
-    print('csv and excel created')
+def create_document(dataFrame, filename):
+    try:
+        os.mkdir('data_result')
+    except FileExistsError:
+        pass
 
+
+    df = pd.DataFrame(dataFrame)
+    df.to_csv(f'data_result/{filename}.csv', index=False)
+    df.to_excel(f'data_result/{filename}.xlsx', index=False)
+
+    print(f'File {filename}.csv and {filename}.xlsx successfully created')
+
+
+def run():
+    query = input('Enter your keyword/job title: ')
+    location = input('Enter your location: ')
+
+    total = get_total_pages(query, location)
+    counter = 0
+    final_result = []
+    for page in range(total):
+        page += 1
+        counter += 10
+        final_result += get_all_items(query, location, counter, page)
+
+    try:
+        os.mkdir('reports')
+    except FileExistsError:
+        pass
+
+    with open(f'reports/{query}.json'.format(query), 'w+') as final_data:
+        json.dump(final_result, final_data)
+
+    print('Data Json Created')
+
+    create_document(final_result, query)
 
 if __name__ == '__main__':
-    get_all_items()
-    # get_total_pages()
+    run()
